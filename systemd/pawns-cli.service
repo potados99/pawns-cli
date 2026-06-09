@@ -1,0 +1,27 @@
+[Unit]
+Description=IPRoyal Pawns CLI
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/pawns-cli \
+    -email=${EMAIL} \
+    -password=${PASSWORD} \
+    -device-name=${DEVICE_NAME} \
+    -device-id=${DEVICE_ID} \
+    -accept-tos
+
+EnvironmentFile=-/etc/default/pawns-cli
+
+Restart=always
+RestartSec=30
+
+# Hardening
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

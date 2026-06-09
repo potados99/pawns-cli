@@ -1,0 +1,7 @@
+[Unit]
+Description=Pawns CLI watchdog (one-shot health check)
+After=pawns-cli.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pawns-watchdog.sh

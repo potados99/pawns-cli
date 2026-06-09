@@ -21,13 +21,15 @@ ARG_EMAIL=""
 ARG_PASSWORD=""
 ARG_DEVICE=""
 ARG_DEVICE_ID=""
+ARG_HEARTBEAT=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
-        --email)       ARG_EMAIL="$2"; shift 2 ;;
-        --password)    ARG_PASSWORD="$2"; shift 2 ;;
-        --device-name) ARG_DEVICE="$2"; shift 2 ;;
-        --device-id)   ARG_DEVICE_ID="$2"; shift 2 ;;
+        --email)         ARG_EMAIL="$2"; shift 2 ;;
+        --password)      ARG_PASSWORD="$2"; shift 2 ;;
+        --device-name)   ARG_DEVICE="$2"; shift 2 ;;
+        --device-id)     ARG_DEVICE_ID="$2"; shift 2 ;;
+        --heartbeat-url) ARG_HEARTBEAT="$2"; shift 2 ;;
         *) echo "Unknown option: $1" >&2; exit 1 ;;
     esac
 done
@@ -91,6 +93,7 @@ EMAIL=${ARG_EMAIL:-you@example.com}
 PASSWORD=${ARG_PASSWORD:-yourpassword}
 DEVICE_NAME=${ARG_DEVICE:-my-device}
 DEVICE_ID=${ARG_DEVICE_ID:-my-device-id}
+HEARTBEAT_URL=${ARG_HEARTBEAT:-}
 ENVEOF
     sudo chmod 600 "$ENV_FILE"
     if [ -z "$ARG_EMAIL" ]; then

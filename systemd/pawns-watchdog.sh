@@ -5,7 +5,7 @@ set -euo pipefail
 
 SERVICE="pawns-cli.service"
 ENV_FILE="/etc/default/pawns-cli"
-SILENT_TIMEOUT=600
+SILENT_TIMEOUT=3600
 
 # Load env for HEARTBEAT_URL and DEVICE_NAME
 if [ -f "$ENV_FILE" ]; then

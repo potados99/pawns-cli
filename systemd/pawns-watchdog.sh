@@ -25,10 +25,14 @@ LABEL="${DEVICE_NAME:-unknown}"
 # Service not running
 if ! systemctl is-active --quiet "$SERVICE"; then
     if systemctl is-failed --quiet "$SERVICE"; then
-        echo "pawns-cli is in failed state (start limit hit?). Resetting and restarting."
+        LAST_LOG=$(journalctl -u "$SERVICE" -n 3 --no-pager -o cat 2>/dev/null)
         systemctl reset-failed "$SERVICE"
         systemctl start "$SERVICE"
-        heartbeat "up" "${LABEL}:+recovered+from+failed+state"
+        if echo "$LAST_LOG" | grep -qE "HOME is not defined|device.*limit"; then
+            heartbeat "down" "${LABEL}:+retrying+(config+error)"
+        else
+            heartbeat "up" "${LABEL}:+recovered+from+failed+state"
+        fi
     else
         heartbeat "down" "${LABEL}:+service+not+running"
     fi

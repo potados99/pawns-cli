@@ -16,7 +16,7 @@ fi
 heartbeat() {
     local status="$1" msg="$2"
     if [ -n "${HEARTBEAT_URL:-}" ]; then
-        curl -fsS -m 10 "${HEARTBEAT_URL}?status=${status}&msg=${msg}" >/dev/null 2>&1 || true
+        wget -qO /dev/null --timeout=10 "${HEARTBEAT_URL}?status=${status}&msg=${msg}" 2>/dev/null || true
     fi
 }
 

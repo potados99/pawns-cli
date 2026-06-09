@@ -104,15 +104,18 @@ fi
 
 sudo systemctl daemon-reload
 
-# --- Restart if already running ---
+# --- Start or restart service ---
 if systemctl is-active --quiet pawns-cli; then
     echo "==> Restarting pawns-cli service..."
     sudo systemctl restart pawns-cli
+elif [ -n "$ARG_EMAIL" ]; then
+    echo "==> Starting pawns-cli service..."
+    sudo systemctl enable --now pawns-cli pawns-watchdog.timer
 else
     echo ""
     echo "Next steps:"
-    [ -z "$ARG_EMAIL" ] && echo "  1. sudo vi $ENV_FILE"
-    echo "  sudo systemctl enable --now pawns-cli pawns-watchdog.timer"
+    echo "  1. sudo vi $ENV_FILE"
+    echo "  2. sudo systemctl enable --now pawns-cli pawns-watchdog.timer"
 fi
 
 echo ""

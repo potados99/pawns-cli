@@ -7,6 +7,11 @@ SERVICE="pawns-cli.service"
 TIMEOUT=600  # 10 minutes with no log output → consider hung
 
 if ! systemctl is-active --quiet "$SERVICE"; then
+    if systemctl is-failed --quiet "$SERVICE"; then
+        echo "pawns-cli is in failed state (start limit hit?). Resetting and restarting."
+        systemctl reset-failed "$SERVICE"
+        systemctl start "$SERVICE"
+    fi
     exit 0
 fi
 

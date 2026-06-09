@@ -2,7 +2,11 @@
 # Install pawns-cli + systemd service on Linux (amd64/arm64).
 #
 # Usage:
-#   wget -qO- https://raw.githubusercontent.com/potados99/pawns-cli/main/install.sh | bash
+#   wget -qO- https://raw.githubusercontent.com/potados99/pawns-cli/main/install.sh | bash -s -- \
+#     --email you@example.com --password yourpass --device-name my-device --device-id my-id
+#
+# Re-running updates the binary and service files.
+# Credentials are only written if --email/--password are provided or no env file exists.
 
 set -euo pipefail
 
@@ -12,6 +16,23 @@ INSTALL_BIN="/usr/local/bin"
 SYSTEMD_DIR="/etc/systemd/system"
 ENV_FILE="/etc/default/pawns-cli"
 
+# --- Parse arguments ---
+ARG_EMAIL=""
+ARG_PASSWORD=""
+ARG_DEVICE=""
+ARG_DEVICE_ID=""
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --email)       ARG_EMAIL="$2"; shift 2 ;;
+        --password)    ARG_PASSWORD="$2"; shift 2 ;;
+        --device-name) ARG_DEVICE="$2"; shift 2 ;;
+        --device-id)   ARG_DEVICE_ID="$2"; shift 2 ;;
+        *) echo "Unknown option: $1" >&2; exit 1 ;;
+    esac
+done
+
+# --- HTTP fetcher ---
 if command -v curl &>/dev/null; then
     fetch() { curl -fsSL -o "$1" "$2"; }
     fetch_stdout() { curl -fsSL "$1"; }
@@ -55,7 +76,7 @@ fetch "$TMP/pawns-watchdog.sh" "$SYSTEMD_URL/pawns-watchdog.sh"
 fetch "$TMP/pawns-watchdog.service" "$SYSTEMD_URL/pawns-watchdog.service"
 fetch "$TMP/pawns-watchdog.timer" "$SYSTEMD_URL/pawns-watchdog.timer"
 
-echo "==> Installing (sudo required)..."
+echo "==> Installing..."
 sudo install -m 755 "$TMP/pawns-cli" "$INSTALL_BIN/pawns-cli"
 
 sudo install -m 644 "$TMP/pawns-cli.service" "$SYSTEMD_DIR/"
@@ -63,24 +84,36 @@ sudo install -m 644 "$TMP/pawns-watchdog.service" "$SYSTEMD_DIR/"
 sudo install -m 644 "$TMP/pawns-watchdog.timer" "$SYSTEMD_DIR/"
 sudo install -m 755 "$TMP/pawns-watchdog.sh" "$INSTALL_BIN/"
 
-if [ ! -f "$ENV_FILE" ]; then
-    sudo tee "$ENV_FILE" > /dev/null <<'ENVEOF'
-EMAIL=you@example.com
-PASSWORD=yourpassword
-DEVICE_NAME=my-device
-DEVICE_ID=my-device-id
+# --- Credentials ---
+if [ -n "$ARG_EMAIL" ] || [ ! -f "$ENV_FILE" ]; then
+    sudo tee "$ENV_FILE" > /dev/null <<ENVEOF
+EMAIL=${ARG_EMAIL:-you@example.com}
+PASSWORD=${ARG_PASSWORD:-yourpassword}
+DEVICE_NAME=${ARG_DEVICE:-my-device}
+DEVICE_ID=${ARG_DEVICE_ID:-my-device-id}
 ENVEOF
-    echo "==> Created $ENV_FILE — edit it with your credentials"
+    sudo chmod 600 "$ENV_FILE"
+    if [ -z "$ARG_EMAIL" ]; then
+        echo "==> Created $ENV_FILE with placeholders — edit it with your credentials"
+    else
+        echo "==> Wrote credentials to $ENV_FILE"
+    fi
 else
-    echo "==> $ENV_FILE already exists, skipping"
+    echo "==> $ENV_FILE already exists, keeping current credentials"
 fi
 
 sudo systemctl daemon-reload
 
+# --- Restart if already running ---
+if systemctl is-active --quiet pawns-cli; then
+    echo "==> Restarting pawns-cli service..."
+    sudo systemctl restart pawns-cli
+else
+    echo ""
+    echo "Next steps:"
+    [ -z "$ARG_EMAIL" ] && echo "  1. sudo vi $ENV_FILE"
+    echo "  sudo systemctl enable --now pawns-cli pawns-watchdog.timer"
+fi
+
 echo ""
-echo "==> Installed pawns-cli $VERSION"
-echo ""
-echo "Next steps:"
-echo "  1. sudo vi $ENV_FILE              # set your email, password, device name/id"
-echo "  2. sudo systemctl enable --now pawns-cli pawns-watchdog.timer"
-echo "  3. journalctl -u pawns-cli -f      # watch logs"
+echo "==> Done (pawns-cli $VERSION)"

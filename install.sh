@@ -70,7 +70,11 @@ TMP=$(mktemp -d)
 trap "rm -rf $TMP" EXIT
 
 echo "==> Downloading binary..."
-fetch "$TMP/pawns-cli" "$DIST_URL/pawns-cli"
+case "$ARCH" in
+    x86_64)  BINARY_NAME="pawns-cli" ;;
+    aarch64) BINARY_NAME="pawns-cli-arm64" ;;
+esac
+fetch "$TMP/pawns-cli" "$DIST_URL/$BINARY_NAME"
 
 echo "==> Downloading service files..."
 fetch "$TMP/pawns-cli.service" "$SYSTEMD_URL/pawns-cli.service"

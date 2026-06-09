@@ -5,6 +5,7 @@ Wants=network-online.target
 
 [Service]
 Type=simple
+Environment=HOME=/tmp
 ExecStart=/usr/local/bin/pawns-cli \
     -email=${EMAIL} \
     -password=${PASSWORD} \
@@ -17,10 +18,8 @@ EnvironmentFile=-/etc/default/pawns-cli
 Restart=always
 RestartSec=30
 
-# Hardening
 NoNewPrivileges=yes
 ProtectSystem=strict
-ProtectHome=yes
 PrivateTmp=yes
 
 [Install]
